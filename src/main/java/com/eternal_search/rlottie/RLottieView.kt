@@ -76,4 +76,17 @@ class RLottieView(context: Context, attrs: AttributeSet?, defStyleAttr: Int): Vi
 			invalidate()
 		}
 	}
+	
+	override fun onAttachedToWindow() {
+		super.onAttachedToWindow()
+		if (drawable == null) {
+			loadDrawable()
+		}
+	}
+	
+	override fun onDetachedFromWindow() {
+		super.onDetachedFromWindow()
+		drawable?.recycle()
+		drawable = null
+	}
 }
