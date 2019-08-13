@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<declare-styleable name="RLottieView">
+		<attr name="rawRes" format="reference" />
+		<attr name="autoRepeat" format="boolean" />
+		<attr name="autoPlay" format="boolean" />
+	</declare-styleable>
+</resources>

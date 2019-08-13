@@ -1,0 +1,3 @@
+[submodule "src/main/jni/rlottie"]
+	path = src/main/jni/rlottie
+	url = https://github.com/Samsung/rlottie
