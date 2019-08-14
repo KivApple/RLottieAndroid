@@ -162,9 +162,11 @@ class RLottieDrawable private constructor(): Drawable(), Animatable {
 		recycle()
 	}
 	
-	override fun setAlpha(p0: Int) {
+	override fun setAlpha(alpha: Int) {
+		paint.alpha = alpha
 	}
 	
-	override fun setColorFilter(p0: ColorFilter?) {
+	override fun setColorFilter(filter: ColorFilter?) {
+		paint.colorFilter = filter
 	}
 }
