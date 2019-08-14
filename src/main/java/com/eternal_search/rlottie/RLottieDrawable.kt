@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.*
 import android.graphics.drawable.Animatable
 import android.graphics.drawable.Drawable
+import java.lang.IllegalArgumentException
 
 class RLottieDrawable private constructor(): Drawable(), Animatable {
 	private var nativePtr: Long = 0
@@ -22,6 +23,22 @@ class RLottieDrawable private constructor(): Drawable(), Animatable {
 		isScheduled = false
 		invalidateSelf()
 	}
+	var progress: Float
+		get() = currentFrameIndex.toFloat() / frameCount
+		set(value) {
+			if (value < 0.0f || value > 1.0f) {
+				throw IllegalArgumentException("Progress must be in range 0..1")
+			}
+			val newFrameIndex = (value * frameCount).toInt()
+			if (newFrameIndex != currentFrameIndex) {
+				currentFrameIndex = newFrameIndex
+				forceFinishNextBitmapRendering()
+				finishNextBitmapRendering()
+				swapBitmaps()
+				lastUpdateTime = System.currentTimeMillis()
+				invalidateSelf()
+			}
+		}
 	
 	constructor(context: Context, rawRes: Int, name: String): this() {
 		context.resources.openRawResource(rawRes).use { stream ->
@@ -48,9 +65,7 @@ class RLottieDrawable private constructor(): Drawable(), Animatable {
 	override fun getIntrinsicHeight(): Int = 256
 	
 	private fun startNextBitmapRendering() {
-		if (nextBitmapRendering) {
-			finishNextBitmapRendering()
-		}
+		forceFinishNextBitmapRendering()
 		RLottieMethods.renderFrame(nativePtr, currentFrameIndex, nextBitmap!!,
 			nextBitmap!!.width, nextBitmap!!.height, nextBitmap!!.rowBytes)
 		nextBitmapRendering = true
@@ -64,6 +79,12 @@ class RLottieDrawable private constructor(): Drawable(), Animatable {
 		nextBitmapRendering = false
 	}
 	
+	private fun forceFinishNextBitmapRendering() {
+		if (nextBitmapRendering) {
+			finishNextBitmapRendering()
+		}
+	}
+	
 	private fun swapBitmaps() {
 		val tmp = nextBitmap
 		nextBitmap = currentBitmap
@@ -75,9 +96,7 @@ class RLottieDrawable private constructor(): Drawable(), Animatable {
 			throw IllegalStateException("RLottieDrawable is recycled")
 		}
 		if (nextBitmap == null || nextBitmap!!.width != bounds.width() || nextBitmap!!.height != bounds.height()) {
-			if (nextBitmapRendering) {
-				finishNextBitmapRendering()
-			}
+			forceFinishNextBitmapRendering()
 			nextBitmap?.recycle()
 			nextBitmap = Bitmap.createBitmap(bounds.width(), bounds.height(), Bitmap.Config.ARGB_8888)
 			currentBitmap?.recycle()
@@ -130,16 +149,13 @@ class RLottieDrawable private constructor(): Drawable(), Animatable {
 		unscheduleSelf(updateRunnable)
 		if (nativePtr == 0L) return
 		stop()
-		if (nextBitmapRendering) {
-			finishNextBitmapRendering()
-		}
+		forceFinishNextBitmapRendering()
 		RLottieMethods.destroy(nativePtr)
 		nativePtr = 0L
 		currentBitmap?.recycle()
 		nextBitmap?.recycle()
 		currentBitmap = null
 		nextBitmap = null
-		nextBitmapRendering = false
 	}
 	
 	protected fun finalize() {

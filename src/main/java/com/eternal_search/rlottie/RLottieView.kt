@@ -2,11 +2,14 @@ package com.eternal_search.rlottie
 
 import android.content.Context
 import android.graphics.Canvas
+import android.graphics.drawable.Animatable
 import android.graphics.drawable.Drawable
 import android.util.AttributeSet
 import android.view.View
 
-class RLottieView(context: Context, attrs: AttributeSet?, defStyleAttr: Int): View(context, attrs, defStyleAttr) {
+class RLottieView(context: Context, attrs: AttributeSet?, defStyleAttr: Int): View(context, attrs, defStyleAttr),
+	Animatable {
+	
 	var rawResId: Int = -1
 		set(value) {
 			field = value
@@ -30,6 +33,12 @@ class RLottieView(context: Context, attrs: AttributeSet?, defStyleAttr: Int): Vi
 			}
 		}
 	private var drawable: RLottieDrawable? = null
+	private var startAfterLoad: Boolean = false
+	var progress: Float
+		get() = drawable?.progress ?: 0.0f
+		set(value) {
+			drawable?.progress = value
+		}
 	
 	constructor(context: Context, attrs: AttributeSet?) : this(context, attrs, 0)
 	
@@ -62,7 +71,7 @@ class RLottieView(context: Context, attrs: AttributeSet?, defStyleAttr: Int): Vi
 				invalidate()
 			}
 		}
-		if (autoPlay) {
+		if (autoPlay || startAfterLoad) {
 			drawable?.start()
 		}
 		invalidate()
@@ -89,4 +98,17 @@ class RLottieView(context: Context, attrs: AttributeSet?, defStyleAttr: Int): Vi
 		drawable?.recycle()
 		drawable = null
 	}
+	
+	override fun start() {
+		startAfterLoad = true
+		drawable?.start()
+	}
+	
+	override fun stop() {
+		startAfterLoad = false
+		autoPlay = false
+		drawable?.stop()
+	}
+	
+	override fun isRunning(): Boolean = drawable?.isRunning == true || startAfterLoad
 }
